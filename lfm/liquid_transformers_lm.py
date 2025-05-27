@@ -342,18 +342,30 @@ class LiquidTransformerLayer(nn.Module):
         
         # Hierarchical liquid processing
         seq_repr = x.mean(dim=1)  # Aggregate sequence
-        liquid_out, fast_h, medium_h, slow_h = self.liquid_cell(
-            seq_repr,
-            liquid_states.get('fast', torch.zeros_like(seq_repr)),
-            liquid_states.get('medium', torch.zeros_like(seq_repr)),
-            liquid_states.get('slow', torch.zeros_like(seq_repr))
-        )
+
+        val_fast_h = liquid_states.get('fast')
+        initial_fast_h = val_fast_h if torch.is_tensor(val_fast_h) else torch.zeros_like(seq_repr)
         
-        # Update liquid states
+        val_medium_h = liquid_states.get('medium')
+        initial_medium_h = val_medium_h if torch.is_tensor(val_medium_h) else torch.zeros_like(seq_repr)
+        
+        val_slow_h = liquid_states.get('slow')
+        initial_slow_h = val_slow_h if torch.is_tensor(val_slow_h) else torch.zeros_like(seq_repr)
+
+        liquid_out, fast_h_ret, medium_h_ret, slow_h_ret = self.liquid_cell(
+            seq_repr,
+            initial_fast_h,
+            initial_medium_h,
+            initial_slow_h
+        )
+
+        if liquid_out is None:
+            liquid_out = torch.zeros_like(seq_repr) 
+
         new_liquid_states = {
-            'fast': fast_h,
-            'medium': medium_h,
-            'slow': slow_h,
+            'fast': fast_h_ret,     
+            'medium': medium_h_ret, 
+            'slow': slow_h_ret,   
             'combined': liquid_out
         }
         
