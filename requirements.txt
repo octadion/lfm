@@ -1,2 +1,6 @@
 torch
 loguru
+datasets
+transformers
+wandb
+matplotlib
